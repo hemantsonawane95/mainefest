@@ -1,0 +1,84 @@
+---
+schema: armada/Chart/v1
+metadata:
+  schema: metadata/Document/v1
+  name: helm-toolkit
+data:
+  chart_name: helm-toolkit
+  release: helm-toolkit
+  namespace: helm-toolkit
+  values: {}
+  source:
+    type: local
+    location: /tmp/openstack-helm-infra
+    subpath: helm-toolkit
+    reference: master
+  dependencies: []
+---
+schema: armada/Chart/v1
+metadata:
+  schema: metadata/Document/v1
+  name: horizon
+data:
+  chart_name: horizon
+  release: horizon
+  namespace: openstack
+  timeout: 3600
+  wait:
+    timeout: 3600
+    labels:
+      release_group: osh-horizon
+  install:
+    no_hooks: false
+  upgrade:
+    no_hooks: false
+  values:
+    network:
+      node_port:
+        enabled: true
+        port: 31000
+    endpoints:
+      oslo_db:
+        auth:
+          admin:
+            password: password 
+    pod:
+      replicas:
+        server: 1
+    local_settings:
+      openstack_neutron_network:
+        enable_router: "True"
+        enable_quotas: "True"
+        enable_ipv6: "False"
+        enable_distributed_router: "False"
+        enable_ha_router: "True"
+        enable_lb: "True"
+        enable_firewall: "False"
+        enable_vpn: "False"
+        enable_fip_topology_check: "True"
+  source:
+    type: local
+    location: /tmp/openstack-helm
+    subpath: horizon
+    reference: master
+  dependencies:
+    - helm-toolkit
+---
+schema: armada/ChartGroup/v1
+metadata:
+  schema: metadata/Document/v1
+  name: openstack-services
+data:
+  description: "Openstack Services"
+  sequenced: False
+  chart_group:
+    - horizon
+---
+schema: armada/Manifest/v1
+metadata:
+  schema: metadata/Document/v1
+  name: taco-manifest
+data:
+  release_prefix: ui
+  chart_groups:
+    - openstack-services
